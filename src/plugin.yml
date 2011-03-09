@@ -1,0 +1,9 @@
+name: Announcer
+main: net.TheDgtl.Announcer.Announcer
+version: 1.00
+author: Drakia
+website: http://www.thedgtl.net
+commands:
+  announcer:
+    description: Reload the announcement file
+    usage: /<command> reload - Reload the announcement file
