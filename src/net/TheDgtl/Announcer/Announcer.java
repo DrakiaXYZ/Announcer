@@ -10,6 +10,8 @@ import java.util.logging.Logger;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.command.ColouredConsoleSender;
+import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -23,33 +25,33 @@ public class Announcer extends JavaPlugin
 	private long delay = 120L; // Delay in seconds
 	ArrayList<String> announcements = new ArrayList<String>();
 
-	public static Logger log;
+	private ColouredConsoleSender console = null;
 	private PluginManager pm;
 	private Permissions permissions = null;
 	private double permVersion = 0;
 
 	public void onEnable()
 	{
-		log = getServer().getLogger();
+		console = new ColouredConsoleSender((CraftServer)getServer());
 		pm = getServer().getPluginManager();
 		if (loadAnnounce()) {
-			log.info("[Announcer] Enabled Announcer v" + getDescription().getVersion());
+			console.sendMessage("[Announcer] Enabled Announcer v" + getDescription().getVersion());
 		} else {
 			pm.disablePlugin(this);
 			return;
 		}
         if (setupPermissions()) {
         	if (permissions != null)
-        		log.info("[Announcer] Using Permissions " + permVersion + " (" + Permissions.version + ") for permissions");
+        		console.sendMessage("[Announcer] Using Permissions " + permVersion + " (" + Permissions.version + ") for permissions");
         } else {
-        	log.info("[Announcer] No permissions plugin found, using default permission settings");
+        	console.sendMessage("[Announcer] No permissions plugin found, using default permission settings");
         }
 	}
 
 	public void onDisable()
 	{
 		announcements.clear();
-		log.info("[Announcer] Disabled Announcer");
+		console.sendMessage("[Announcer] Disabled Announcer");
 	}
 	
 	private boolean loadAnnounce() {
@@ -58,7 +60,7 @@ public class Announcer extends JavaPlugin
 		try {
 			File fh = new File(this.getDataFolder(), "Announce.txt");
 			if (!fh.exists()) {
-				log.info("[Announcer] Could not find Announce.txt file");
+				console.sendMessage("[Announcer] Could not find Announce.txt file");
 				return false;
 			}
 			boolean firstLine = true;
@@ -75,7 +77,7 @@ public class Announcer extends JavaPlugin
 			}
 			scanner.close();
 		} catch (FileNotFoundException e) {
-			log.info("[Announcer] Could not load Announce.txt");
+			console.sendMessage("[Announcer] Could not load Announce.txt");
 			return false;
 		}
 		getServer().getScheduler().scheduleSyncRepeatingTask(this, new AnnounceThread(announcements, getServer()), delay, delay);
@@ -104,7 +106,7 @@ public class Announcer extends JavaPlugin
 				String[] permParts = Permissions.version.split("\\.");
 				permVersion = Double.parseDouble(permParts[0] + "." + permParts[1]);
 			} catch (Exception e) {
-				log.info("Could not determine Permissions version: " + Permissions.version);
+				console.sendMessage("Could not determine Permissions version: " + Permissions.version);
 				return true;
 			}
 			return true;
@@ -162,7 +164,7 @@ public class Announcer extends JavaPlugin
 			Random randomise = new Random();
 			int index = randomise.nextInt(announcements.size());
 			server.broadcastMessage(announcements.get(index));
-			log.info("[Announcer] " + announcements.get(index));
+			console.sendMessage("[Announcer] " + announcements.get(index));
 		}
 	}
 }

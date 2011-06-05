@@ -1,6 +1,6 @@
 name: Announcer
 main: net.TheDgtl.Announcer.Announcer
-version: 1.00
+version: 1.0.1
 author: Drakia
 website: http://www.thedgtl.net
 commands:
