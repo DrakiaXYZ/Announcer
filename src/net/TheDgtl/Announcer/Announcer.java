@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.logging.Logger;
 
 import org.bukkit.Server;
 import org.bukkit.command.Command;
