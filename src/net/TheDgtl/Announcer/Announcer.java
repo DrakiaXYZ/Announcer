@@ -5,12 +5,11 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.command.ColouredConsoleSender;
-import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -24,33 +23,31 @@ public class Announcer extends JavaPlugin
 	private long delay = 120L; // Delay in seconds
 	ArrayList<String> announcements = new ArrayList<String>();
 
-	private ColouredConsoleSender console = null;
+	private Logger log;
 	private PluginManager pm;
 	private Permissions permissions = null;
-	private double permVersion = 0;
 
 	public void onEnable()
 	{
-		console = new ColouredConsoleSender((CraftServer)getServer());
+		log = getServer().getLogger();
 		pm = getServer().getPluginManager();
 		if (loadAnnounce()) {
-			console.sendMessage("[Announcer] Enabled Announcer v" + getDescription().getVersion());
+			log.info("[Announcer] Enabled Announcer v" + getDescription().getVersion());
 		} else {
 			pm.disablePlugin(this);
 			return;
 		}
-        if (setupPermissions()) {
-        	if (permissions != null)
-        		console.sendMessage("[Announcer] Using Permissions " + permVersion + " (" + Permissions.version + ") for permissions");
+        if (setupPermissions() && permissions != null) {
+        	log.info("[Announcer] Using Permissions (" + Permissions.version + ") for permissions");
         } else {
-        	console.sendMessage("[Announcer] No permissions plugin found, using default permission settings");
+        	log.info("[Announcer] No permissions plugin found, using default permission settings");
         }
 	}
 
 	public void onDisable()
 	{
 		announcements.clear();
-		console.sendMessage("[Announcer] Disabled Announcer");
+		log.info("[Announcer] Disabled Announcer");
 	}
 	
 	private boolean loadAnnounce() {
@@ -59,7 +56,7 @@ public class Announcer extends JavaPlugin
 		try {
 			File fh = new File(this.getDataFolder(), "Announce.txt");
 			if (!fh.exists()) {
-				console.sendMessage("[Announcer] Could not find Announce.txt file");
+				log.info("[Announcer] Could not find Announce.txt file");
 				return false;
 			}
 			boolean firstLine = true;
@@ -76,7 +73,7 @@ public class Announcer extends JavaPlugin
 			}
 			scanner.close();
 		} catch (FileNotFoundException e) {
-			console.sendMessage("[Announcer] Could not load Announce.txt");
+			log.info("[Announcer] Could not load Announce.txt");
 			return false;
 		}
 		getServer().getScheduler().scheduleSyncRepeatingTask(this, new AnnounceThread(announcements, getServer()), delay, delay);
@@ -92,7 +89,6 @@ public class Announcer extends JavaPlugin
 	 */
 	private boolean setupPermissions() {
 		Plugin perm;
-		// Apparently GM isn't a new permissions plugin, it's Permissions "2.0.1"
 		// API change broke my plugin.
 		perm = pm.getPlugin("Permissions");
 		// We're running Permissions
@@ -101,13 +97,6 @@ public class Announcer extends JavaPlugin
 				pm.enablePlugin(perm);
 			}
 			permissions = (Permissions)perm;
-			try {
-				String[] permParts = Permissions.version.split("\\.");
-				permVersion = Double.parseDouble(permParts[0] + "." + permParts[1]);
-			} catch (Exception e) {
-				console.sendMessage("Could not determine Permissions version: " + Permissions.version);
-				return true;
-			}
 			return true;
 		}
 		// Permissions not loaded
@@ -117,11 +106,11 @@ public class Announcer extends JavaPlugin
 	/*
 	 * Check whether the player has the given permissions.
 	 */
-	public boolean hasPerm(Player player, String perm, boolean def) {
+	public boolean hasPerm(Player player, String perm) {
 		if (permissions != null) {
 			return permissions.getHandler().has(player, perm);
 		} else {
-			return def;
+			return player.hasPermission(perm);
 		}
 	}
 	
@@ -132,7 +121,7 @@ public class Announcer extends JavaPlugin
     	if (sender instanceof Player) player = (Player)sender;
     	
     	if (comName.equals("announcer")) {
-    		if (player != null && !hasPerm(player, "announcer.reload", player.isOp())) {
+    		if (player != null && !hasPerm(player, "announcer.reload")) {
     			player.sendMessage("[Announcer] Permission Denied");
     			return true;
     		}
@@ -163,7 +152,6 @@ public class Announcer extends JavaPlugin
 			Random randomise = new Random();
 			int index = randomise.nextInt(announcements.size());
 			server.broadcastMessage(announcements.get(index));
-			console.sendMessage("[Announcer] " + announcements.get(index));
 		}
 	}
 }
